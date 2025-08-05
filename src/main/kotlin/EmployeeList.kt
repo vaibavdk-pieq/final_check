@@ -17,11 +17,11 @@ class EmployeeList : ArrayList<Employee>() {
             Employee("Vikram", "Iyer", Departments.IT.name, Roles.TEAM_LEAD.role, "cto")
         )
 
-
-        predefined.forEach {
-            super.add(it)
-            println("Predefined employee added: ${it.id} - ${it.firstName} ${it.lastName}")
-        }
+        super.addAll(predefined)
+//        predefined.forEach {
+//            super.add(it)
+//            println("Predefined employee added: ${it.id} - ${it.firstName} ${it.lastName}")
+//        }
     }
 
     override fun add(employee: Employee): Boolean {

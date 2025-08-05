@@ -20,8 +20,12 @@ class Employee(
         require(firstName.isNotBlank()) { "First name cannot be blank" }
         require(lastName.isNotBlank()) { "Last name cannot be blank" }
 
+
         this.firstName = firstName.trim().lowercase()
         this.lastName = lastName.trim().lowercase()
+        this.role=role.lowercase()
+        this.department=department.lowercase()
+        this.reportingTo=reportingTo.lowercase()
 
         // Auto-generate ID: e.g., "VK0"
         id = "${this.firstName.first()}${this.lastName.first()}${idCounter++}".lowercase()
@@ -29,6 +33,6 @@ class Employee(
 
 
     override fun toString(): String {
-        return "ID: $id | Name: $firstName $lastName | Department: $department | Role: $role | Reporting To: $reportingTo".lowercase()
+        return "|ID: $id | First Name: $firstName | Last Name: $lastName | Department: $department | Role: $role | Reporting To: $reportingTo|".lowercase()
     }
 }

@@ -23,30 +23,28 @@ class EmployeeManager {
 
     // Update employee details
     fun updateEmployeeList(
-        empId: String,
+        employeeId: String,
         newFirstName: String,
         newLastName: String,
         newDepartment: String,
         newRole: String,
         newReportingTo: String
     ) {
-        val employee = employeeList.find { it.id == empId }
+        val employee = employeeList.find { it.id == employeeId }
         if (employee != null) {
             employee.firstName = newFirstName.lowercase()
             employee.lastName = newLastName.lowercase()
             employee.department = newDepartment.lowercase()
             employee.role = newRole.lowercase()
             employee.reportingTo = newReportingTo.lowercase()
-            println("Employee $empId updated successfully.")
-        } else {
-            println("Employee with ID $empId not found.")
+            println("Employee $employeeId updated successfully.")
         }
     }
 
     // Delete employee
     fun deleteEmployee(empId: String) {
-        val removed = employeeList.removeIf { it.id == empId }
-        if (removed) {
+        val removingEmployee = employeeList.removeIf { it.id == empId }
+        if (removingEmployee) {
             println("Employee $empId deleted.")
         } else {
             println("Employee with ID $empId not found.")
@@ -54,11 +52,12 @@ class EmployeeManager {
     }
 
     // Check-in
-    fun checkIn(empId: String, inputDateTime: String? = null) {
-        if (employeeList.none { it.id == empId }) {
-            println("Invalid employee ID.")
-            return
-        }
+    fun checkIn(employeeId: String, inputDateTime: String? = null) {
+        if(isEmployeeExist(employeeId)){
+//        if (employeeList.none { it.id == employeeId }) {
+//            println("Invalid employee ID.")
+//            return
+//        }
 
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
 
@@ -71,9 +70,10 @@ class EmployeeManager {
             return
         }
 
-        val attendance = Attendance(empId, checkInTime)
+        val attendance = Attendance(employeeId, checkInTime)
         attendanceList.add(attendance)
         println("Checked in successfully at: ${checkInTime.format(formatter)}")
+    }
     }
 
 
@@ -81,35 +81,36 @@ class EmployeeManager {
     fun checkOut(empId: String, inputDateTime: String? = null) {
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
 
-        val checkOutTime = try {
+        val checkOutDateTime = try {
             inputDateTime?.takeIf { it.isNotBlank() }?.let {
-                LocalDateTime.parse(it, formatter)
-            } ?: LocalDateTime.now()
+                LocalDateTime.parse(it, formatter)//Parsing the Date and time
+            } ?: LocalDateTime.now()//Blank means we will take the current local time
         } catch (e: DateTimeParseException) {
             println("Invalid date/time format. Use yyyy-MM-dd HH:mm")
             return
         }
 
         // Use the date part of the checkOutTime instead of always using today
-        val recordDate = checkOutTime.toLocalDate()
+        val checkOutDate = checkOutDateTime.toLocalDate()
 
         val record = attendanceList.find {
             it.empId == empId &&
-                    it.checkInDateTime.toLocalDate() == recordDate &&
+                    it.checkInDateTime.toLocalDate() == checkOutDate &&
                     it.checkOutDateTime == null
+                    //&& it.checkInDateTime.toLocalTime().isBefore(checkOutDateTime.toLocalTime())
         }
 
         if (record == null) {
-            println("No check-in found for employee $empId on $recordDate or already checked out.")
+            println("No check-in found for employee $empId on $checkOutDate or already checked out.")
             return
         }
 
-        if (checkOutTime.isBefore(record.checkInDateTime)) {
+        if (checkOutDateTime.isBefore(record.checkInDateTime)) {
             println("Checkout time cannot be before check-in time.")
             return
         }
 
-        val duration = Duration.between(record.checkInDateTime, checkOutTime).toMinutes()
+        val duration = Duration.between(record.checkInDateTime, checkOutDateTime).toMinutes()
         if (duration < 60) {
             println("Do you want to check out so early? Only $duration minutes worked. Confirm? (yes/no)")
             val confirmation = readln().trim().lowercase()
@@ -119,7 +120,7 @@ class EmployeeManager {
             }
         }
 
-        record.checkOutDateTime = checkOutTime
+        record.checkOutDateTime = checkOutDateTime
         record.calculateWorkingHours()
         println("Checked out successfully. Total hours worked: ${record.workingHours}")
     }
@@ -139,11 +140,11 @@ class EmployeeManager {
 
     // Calculate total working hours for all employees within a date range
     fun calculateTotalWorkingHour(fromDate: String, toDate: String) {
-        val from = LocalDateTime.parse("$fromDate 00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
-        val to = LocalDateTime.parse("$toDate 23:59", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
+        val startDate = LocalDateTime.parse("$fromDate 00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
+        val endDate = LocalDateTime.parse("$toDate 23:59", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
 
         val filtered = attendanceList.filter {
-            it.checkInDateTime >= from && it.checkInDateTime <= to
+            it.checkInDateTime >= startDate && it.checkInDateTime <= endDate
         }
 
         if (filtered.isEmpty()) {
@@ -153,7 +154,7 @@ class EmployeeManager {
 
         val grouped = filtered.groupBy { it.empId }
         for ((empId, records) in grouped) {
-            val total = records.sumOf { it.workingHours ?: 0.0 }
+            val total = records.sumOf { it.workingHours ?: 0.0 }//looping inside each element to find the sum if working hours
             println("Employee ID: $empId | Total Hours Worked: %.2f".format(total))
         }
     }
